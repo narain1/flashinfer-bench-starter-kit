@@ -66,6 +66,41 @@ Note: `solution_dir` is **not** supported. Use `source_dir` instead.
 
 Yes. Our pipeline scans all tags within the evaluation window and groups by definition. Multiple tags targeting different definitions will all be collected. If multiple tags target the same definition, only the latest tag is used.
 
+Either works — all in one repo, or split across multiple repos, whichever is easier for you.
+
+If you put everything in one repo (per approach), place each kernel in its own subdirectory (e.g., moe/, dsa_attention/, dsa_indexer/, gdn_decode/, gdn_prefill/), each with its own config.toml (one config.toml for one kernel pls). The evaluation pipeline scans the  root and immediate subdirectories for configs and packs each as a separate solution. Please remove the root-level config.toml in this case — otherwise it would get picked up as an additional solution.
+
+Here's what a one-repo setup looks like (example with all 5 kernels):
+
+```
+my-submission-repo/
+├── moe/
+│   ├── config.toml          # definition = "moe_fp8_block_scale_ds_routing_topk8_ng8_kg4_e32_h7168_i2048"
+│   └── solution/
+│       └── triton/
+│           └── kernel.py
+├── dsa_attention/
+│   ├── config.toml          # definition = "dsa_sparse_attention_h16_ckv512_kpe64_topk2048_ps64"
+│   └── solution/
+│       └── cuda/
+│           └── kernel.cu
+├── dsa_indexer/
+│   ├── config.toml          # definition = "dsa_topk_indexer_fp8_h64_d128_topk2048_ps64"
+│   └── solution/
+│       └── triton/
+│           └── kernel.py
+├── gdn_decode/
+│   ├── config.toml          # definition = "gdn_decode_qk4_v8_d128_k_last"
+│   └── solution/
+│       └── triton/
+│           └── kernel.py
+└── gdn_prefill/
+    ├── config.toml          # definition = "gdn_prefill_qk4_v8_d128_k_last"
+    └── solution/
+        └── cuda/
+            └── kernel.cu
+```
+
 **Q: What correctness tolerances are used?**
 
 An element fails only if **both** `abs_error > atol` **AND** `rel_error > rtol`. Default tolerances:
